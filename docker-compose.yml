@@ -12,4 +12,4 @@ services:
       - 3000:3000
     command: npm run start
     labels:
-      - "traefik.http.routers.whoami.rule=Host(`cp.vpn.mahitm.localhost`)"
+      - "traefik.http.routers.mahitm_vpn_cp.rule=Host(`mahitm_vpn_cp.docker.localhost`)"
