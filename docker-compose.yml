@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  mahitm_vpn_cp:
+    container_name: mahitm_vpn_cp
+    image: mahitm_vpn_cp:latest
+    environment:
+      - FB_ADMIN_PRIVATE_KEY=$FB_ADMIN_PRIVATE_KEY
+    build:
+      context: .
+      target: production
+      dockerfile: ./Dockerfile
+    command: npm run start
+    labels:
+      - "traefik.http.routers.whoami.rule=Host(`cp.vpn.mahitm.localhost`)"
