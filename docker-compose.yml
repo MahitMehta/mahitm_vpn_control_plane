@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   mahitm_vpn_cp:
     container_name: mahitm_vpn_cp
@@ -10,6 +8,8 @@ services:
       context: .
       target: production
       dockerfile: ./Dockerfile
+    ports:
+      - 3000:3000
     command: npm run start
     labels:
       - "traefik.http.routers.whoami.rule=Host(`cp.vpn.mahitm.localhost`)"
