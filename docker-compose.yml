@@ -8,8 +8,6 @@ services:
       context: .
       target: production
       dockerfile: ./Dockerfile
-    expose:
-      - "3000/tcp"
     networks:
       - proxy
     ports:
@@ -18,9 +16,9 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.mahitm_vpn_cp.entrypoints=web"
-      - "traefik.http.routers.mahitm_vpn_cp.rule=Host(`mahitm_vpn_cp.docker.localhost`)"
-      - "traefik.http.services.mahitm_vpn_cp.loadbalancer.server.port=3000"
+      - "traefik.http.routers.mahitm_vpn_cp.rule=Host(`cp.vpn.mahitm.localhost`)"
 
 networks:
   proxy: 
     name: proxy
+    external: true
