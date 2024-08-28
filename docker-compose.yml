@@ -9,9 +9,18 @@ services:
       target: production
       dockerfile: ./Dockerfile
     expose:
-      - 3000
+      - "3000/tcp"
+    networks:
+      - proxy
     ports:
       - 3000:3000
     command: npm run start
     labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mahitm_vpn_cp.entrypoints=web"
       - "traefik.http.routers.mahitm_vpn_cp.rule=Host(`mahitm_vpn_cp.docker.localhost`)"
+      - "traefik.http.services.mahitm_vpn_cp.loadbalancer.server.port=3000"
+
+networks:
+  proxy: 
+    name: proxy
