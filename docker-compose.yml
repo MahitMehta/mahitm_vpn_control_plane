@@ -15,10 +15,11 @@ services:
     command: npm run start
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.mahitm_vpn_cp.entrypoints=web"
-      - "traefik.http.routers.mahitm_vpn_cp.rule=Host(`cp.vpn.mahitm.localhost`)"
+      - "traefik.http.routers.mahitm_vpn_cp.tls=true"
+      - "traefik.http.routers.mahitm_vpn_cp.tls.certresolver=myresolver"
+      - "traefik.http.routers.mahitm_vpn_cp.rule=Host(`cp0-vpn.mahitm.com`)"
 
 networks:
-  proxy: 
+  proxy:
     name: proxy
     external: true
