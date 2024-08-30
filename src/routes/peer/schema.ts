@@ -5,7 +5,7 @@ export const Tunnel = Type.Object({
     id: Type.String(),
     ipv4: Type.String(),
     port: Type.Number(),
-    private_key: Type.String()
+    public_key: Type.String()
 })
   
 export type TunnelType = Static<typeof Tunnel>
