@@ -17,7 +17,8 @@ const tunnelsSchema: FastifySchema = {
 }
 
 export const AddBody = Type.Object({
-    id: Type.String()
+    nodeId: Type.String(),
+    userId: Type.String()
 })
 
 const addSchema: FastifySchema = {

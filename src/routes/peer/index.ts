@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync } from "fastify";
 import { getAuth } from "firebase-admin/auth";
-import { NodeMessageType } from "../node/types";
+import { ENodeMessage, type INodeCreatePeer, type INodeMessage } from "../node/types";
 import { type AddBodyType, addSchema, tunnelsSchema } from "./schema";
 
 const peer: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
@@ -23,12 +23,14 @@ const peer: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
         for (const client of fastify.websocketServer.clients) {
             // @ts-ignore
             const nodeId = client.nodeId; 
-            if (nodeId !== req.body.id) continue;
+            if (nodeId !== req.body.nodeId) continue;
 
             client.send(JSON.stringify({ 
-                type: NodeMessageType.CreatePeer,
-                userId: "unknown"
-            }));
+                type: ENodeMessage.CreatePeer,
+                body: {
+                    userId: req.body.userId
+                }
+            } as INodeMessage<INodeCreatePeer>));
             res.send({ message: "Peer Creation Requested." });
             return; 
         }
@@ -41,7 +43,11 @@ const peer: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
         async (_req, res) => {
         const { firestore:db } = fastify;
         const tunnels = db.collection("tunnels");
-        const data = await tunnels.get().catch(_ => null);
+        const data = await tunnels.get().catch(e => {
+            console.log(`Error fetching tunnels: ${e}`);
+            return null;
+        });
+        
         if (!data) {
             res.code(500);
             return; 
