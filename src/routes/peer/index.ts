@@ -6,7 +6,7 @@ import { type AddBodyType, addSchema, tunnelsSchema } from "./schema";
 const peer: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
     fastify.addHook("preHandler",  async (req, res) => {
         if (!req.headers.authorization || !req.headers.authorization.startsWith("Bearer ")) {
-            res.code(404).send({ message: "Bad Request" });
+            res.code(400).send({ message: "Bad Request" });
             return;
         }
 

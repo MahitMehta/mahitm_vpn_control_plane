@@ -1,4 +1,4 @@
-FROM node:22-alpine3.19 AS production
+FROM node:18-alpine3.19 AS production
 
 WORKDIR /usr/src/app
 
