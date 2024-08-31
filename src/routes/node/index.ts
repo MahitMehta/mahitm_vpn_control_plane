@@ -1,7 +1,42 @@
 import type { FastifyPluginAsync } from "fastify";
+import { 
+    ENodeMessage, 
+    type INodeCreatePeerResponse, 
+    type INodeRemovePeerResponse 
+} from "./types";
 
 type NodeConnectionQuery = {
     id: string; 
+}
+
+function handleNodeMessage(
+    serializedMSG: string, 
+    nodeId: string,
+    nodePeers: FirebaseFirestore.CollectionReference<FirebaseFirestore.DocumentData>
+) {
+    try {
+        const msg = JSON.parse(serializedMSG);
+        switch (msg.type) {
+            case ENodeMessage.CreatePeerResponse: {
+                const { userId, ipv4, privateKey, publicKey } = msg.body as INodeCreatePeerResponse;
+                nodePeers.doc(userId).set({ ipv4, privateKey, publicKey });
+                console.log(`Peer created by ${nodeId}`);
+
+                break; 
+            }
+            case ENodeMessage.RemovePeerResponse: {
+                const { userId } = msg.body as INodeRemovePeerResponse
+                nodePeers.doc(userId).delete();
+                console.log(`Peer removed by ${nodeId}`);
+
+                break;
+            } default: 
+                console.log(`Unknown message from ${nodeId}, type: ${msg.type}`);
+                break;
+        }
+    } catch {
+        console.log(`Invalid message from ${nodeId}: ${serializedMSG}`);
+    }
 }
 
 const node: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
@@ -18,23 +53,15 @@ const node: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
         console.log(`Connection from ${nodeId}`);
         conn.nodeId = nodeId;
 
-        // const { firestore:db } = fastify;
-        // const nodePeers = db.collection(`tunnels/${nodeId}/peers`);
-        // nodePeers.onSnapshot(snapshot => {
-        //     for (const change of snapshot.docChanges()) {
-        //         console.log(change.type, change.doc.data())
-        //     }
-        // }); 
+        const { firestore:db } = fastify;
+        const nodePeers = db.collection(`tunnels/${nodeId}/peers`);
     
         conn.on("close", async () => {
             console.log(`Connection closed by ${nodeId}`);
         });
         conn.on('message', async buffer => {
-            const msg = buffer.toString(); 
-            console.log(msg);
-            if (msg === 'ping') {
-                conn.send('pong');
-            }
+            const serializedMSG = buffer.toString(); 
+            handleNodeMessage(serializedMSG, nodeId, nodePeers);
         });
     })
   }

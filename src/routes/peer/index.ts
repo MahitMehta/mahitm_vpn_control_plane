@@ -12,6 +12,8 @@ const peer: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
 
         const token = req.headers.authorization?.substring(7);
         const user = await getAuth().verifyIdToken(token).catch(_ => null);
+        
+        fastify.user = user; 
     
         if (!user) {
             res.code(401).send({ message: "Unauthorized" });
@@ -25,10 +27,11 @@ const peer: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
             const nodeId = client.nodeId; 
             if (nodeId !== req.body.nodeId) continue;
 
+            console.log(fastify.user);
             client.send(JSON.stringify({ 
                 type: ENodeMessage.CreatePeer,
                 body: {
-                    userId: req.body.userId
+                    userId: fastify.user?.uid
                 }
             } as INodeMessage<INodeCreatePeer>));
             res.send({ message: "Peer Creation Requested." });
@@ -47,7 +50,7 @@ const peer: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
             console.log(`Error fetching tunnels: ${e}`);
             return null;
         });
-        
+
         if (!data) {
             res.code(500);
             return; 

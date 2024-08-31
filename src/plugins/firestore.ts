@@ -1,12 +1,14 @@
 import fp from "fastify-plugin"
 import * as admin from "firebase-admin";
 import { cert } from "firebase-admin/app";
+import type { DecodedIdToken } from "firebase-admin/auth";
 
 declare module 'fastify' {
     interface FastifyInstance {
-        firestore: admin.firestore.Firestore
+        firestore: admin.firestore.Firestore,
+        user: DecodedIdToken | null
     }
-  }
+}
 
 export default fp((fastify, _options, done) => {
     admin.initializeApp({
