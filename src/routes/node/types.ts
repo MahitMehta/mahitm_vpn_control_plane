@@ -3,6 +3,8 @@ export enum ENodeMessage {
     RemovePeer = 1,
     CreatePeerResponse = 2,
     RemovePeerResponse = 3,
+    RequestTunnel = 4,
+    RequestTunnelResponse = 5
 }
 
 export type INodeCreatePeer = {
@@ -18,6 +20,22 @@ export type INodeCreatePeerResponse = {
 
 export type INodeRemovePeerResponse = {
     userId: string;
+}
+
+export interface INodeTunnelRequest {
+    ipv4: string;
+    srcPort: number;
+    dstPort: number;
+    publicKey: string;
+    privateKey: string; 
+}
+
+export interface INodeTunnelRequestResponse {
+    ipv4: string;
+    srcPort: number;
+    dstPort: number;
+    publicKey: string;
+    privateKey: string; 
 }
 
 export interface INodeMessage<T> {

@@ -1,32 +1,65 @@
 import type { FastifyPluginAsync } from "fastify";
+import type { WebSocket } from "ws";
 import { 
-    ENodeMessage, 
-    type INodeCreatePeerResponse, 
-    type INodeRemovePeerResponse 
+    ENodeMessage,
+    type INodeCreatePeerResponse,
+    type INodeRemovePeerResponse,
+    type INodeTunnelRequest 
 } from "./types";
 
-type NodeConnectionQuery = {
-    id: string; 
+interface NodeConnectionQuery {
+    id: string;
 }
 
-function handleNodeMessage(
+async function handleNodeMessage(
+    conn: WebSocket,
     serializedMSG: string, 
     nodeId: string,
-    nodePeers: FirebaseFirestore.CollectionReference<FirebaseFirestore.DocumentData>
-) {
+    db: FirebaseFirestore.Firestore
+) {    
     try {
         const msg = JSON.parse(serializedMSG);
         switch (msg.type) {
+            case ENodeMessage.RequestTunnel: {
+                console.log(`Tunnel state requested by ${nodeId}`);
+                const doc = msg.body as INodeTunnelRequest;
+                const tunnel = await db.collection("tunnels").doc(nodeId).get();
+                
+                if (tunnel.exists) {
+                    const peers = await db.collection(`tunnels/${nodeId}/peers`).get();
+                    const response = JSON.stringify({ 
+                        type: ENodeMessage.RequestTunnelResponse,
+                        body: {
+                            ...tunnel.data(), 
+                            peers: peers.docs.map(doc => ({ userId: doc.id, ...doc.data() }))
+                        }
+                    });
+                    conn.send(response);
+                    
+                    break; 
+                }
+
+                await db.collection("tunnels").doc(nodeId).set(doc);
+                const response = JSON.stringify({ 
+                    type: ENodeMessage.RequestTunnelResponse,
+                    body: { ...doc, peers: [] }
+                 });
+                conn.send(response);
+
+                break;
+            }
             case ENodeMessage.CreatePeerResponse: {
+                const nodePeers = db.collection(`tunnels/${nodeId}/peers`);
                 const { userId, ipv4, privateKey, publicKey } = msg.body as INodeCreatePeerResponse;
-                nodePeers.doc(userId).set({ ipv4, privateKey, publicKey });
+                await nodePeers.doc(userId).set({ ipv4, privateKey, publicKey });
                 console.log(`Peer created by ${nodeId}`);
 
                 break; 
             }
             case ENodeMessage.RemovePeerResponse: {
+                const nodePeers = db.collection(`tunnels/${nodeId}/peers`);
                 const { userId } = msg.body as INodeRemovePeerResponse
-                nodePeers.doc(userId).delete();
+                await nodePeers.doc(userId).delete();
                 console.log(`Peer removed by ${nodeId}`);
 
                 break;
@@ -54,14 +87,13 @@ const node: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
         conn.nodeId = nodeId;
 
         const { firestore:db } = fastify;
-        const nodePeers = db.collection(`tunnels/${nodeId}/peers`);
-    
+
         conn.on("close", async () => {
             console.log(`Connection closed by ${nodeId}`);
         });
         conn.on('message', async buffer => {
             const serializedMSG = buffer.toString(); 
-            handleNodeMessage(serializedMSG, nodeId, nodePeers);
+            await handleNodeMessage(conn, serializedMSG, nodeId, db);
         });
     })
   }
