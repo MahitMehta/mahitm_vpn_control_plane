@@ -4,8 +4,13 @@ import type { FastifySchema } from "fastify";
 export const Tunnel = Type.Object({
     id: Type.String(),
     ipv4: Type.String(),
-    port: Type.Number(),
-    public_key: Type.String()
+    dstPort: Type.Number(),
+    publicKey: Type.String()
+})
+
+export const Peer = Type.Object({
+    ipv4: Type.String(),
+    privateKey: Type.String()
 })
   
 export type TunnelType = Static<typeof Tunnel>
@@ -21,7 +26,10 @@ export const AddBody = Type.Object({
 })
 
 export const addSchema: FastifySchema = {
-    body: AddBody
+    body: AddBody,
+    response: {
+        200: Peer
+    }
 }
 
 export type AddBodyType = Static<typeof AddBody>;

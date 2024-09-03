@@ -26,14 +26,35 @@ const peer: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
             // @ts-ignore
             const nodeId = client.nodeId; 
             if (nodeId !== req.body.nodeId) continue;
+            if (!fastify.user) return res.code(500).send({ message: "User object not retrievable." });
 
             client.send(JSON.stringify({ 
                 type: ENodeMessage.CreatePeer,
                 body: {
-                    userId: fastify.user?.uid
+                    userId: fastify.user.uid
                 }
             } as INodeMessage<INodeCreatePeer>));
-            res.send({ message: "Peer Creation Requested." });
+            console.log("Peer Creation Requested.");
+
+            const { firestore:db } = fastify;
+
+            let created = false; 
+            const unsubscribe = db
+                .collection(`tunnels/${req.body.nodeId}/peers`)
+                .doc(fastify.user.uid)
+                .onSnapshot(doc => {
+                    if (doc.exists) {
+                        created = true;
+                        unsubscribe();
+                        res.send({ ...doc.data()});
+                    }
+            });
+
+            await new Promise(resolve => setTimeout(resolve, 5000));
+            if (created) return;
+
+            unsubscribe();
+            res.code(500).send({ message: "Peer Creation Timeout." });
             return; 
         }
 
@@ -45,14 +66,35 @@ const peer: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
             // @ts-ignore
             const nodeId = client.nodeId; 
             if (nodeId !== req.body.nodeId) continue;
+            if (!fastify.user) return res.code(500).send({ message: "User object not retrievable." });
 
             client.send(JSON.stringify({ 
                 type: ENodeMessage.RemovePeer,
                 body: {
-                    userId: fastify.user?.uid
+                    userId: fastify.user.uid
                 }
             } as INodeMessage<INodeRemovePeer>));
-            res.send({ message: "Peer Removal Requested." });
+            console.log("Peer Removal Requested.");
+
+            const { firestore:db } = fastify;
+
+            let removed = false; 
+            const unsubscribe = db
+                .collection(`tunnels/${req.body.nodeId}/peers`)
+                .doc(fastify.user.uid)
+                .onSnapshot(doc => {
+                    if (!doc.exists) {
+                        removed = true;
+                        unsubscribe();
+                        res.send({ message: "Peer Removed." });
+                    }
+            });
+
+            await new Promise(resolve => setTimeout(resolve, 5000));
+            if (removed) return;
+
+            unsubscribe();
+            res.code(500).send({ message: "Peer Removal Timeout." });
             return; 
         }
 
@@ -74,7 +116,9 @@ const peer: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
             return; 
         }
         
-        const result = data.docs.map(doc => ({ id: doc.id, ...doc.data() }));  
+        const result = data.docs
+            .filter(doc => !!doc.data().dstPort) // TODO: Remove this filter
+            .map(doc => ({ id: doc.id, ...doc.data() }));
         res.send(result);
     });
 }
