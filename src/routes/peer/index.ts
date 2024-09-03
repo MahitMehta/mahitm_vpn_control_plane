@@ -1,7 +1,7 @@
 import type { FastifyPluginAsync } from "fastify";
 import { getAuth } from "firebase-admin/auth";
-import { ENodeMessage, type INodeCreatePeer, type INodeMessage } from "../node/types";
-import { type AddBodyType, addSchema, tunnelsSchema } from "./schema";
+import { ENodeMessage, INodeRemovePeer, type INodeCreatePeer, type INodeMessage } from "../node/types";
+import { type AddBodyType, type RemoveBodyType, addSchema, removeSchema, tunnelsSchema } from "./schema";
 
 const peer: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
     fastify.addHook("preHandler",  async (req, res) => {
@@ -27,7 +27,6 @@ const peer: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
             const nodeId = client.nodeId; 
             if (nodeId !== req.body.nodeId) continue;
 
-            console.log(fastify.user);
             client.send(JSON.stringify({ 
                 type: ENodeMessage.CreatePeer,
                 body: {
@@ -35,6 +34,25 @@ const peer: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
                 }
             } as INodeMessage<INodeCreatePeer>));
             res.send({ message: "Peer Creation Requested." });
+            return; 
+        }
+
+        res.code(404).send({ message: "Node Not Available." });
+    });
+
+    fastify.post<{ Body: RemoveBodyType }>("/remove", { schema: removeSchema }, async (req, res) => {
+        for (const client of fastify.websocketServer.clients) {
+            // @ts-ignore
+            const nodeId = client.nodeId; 
+            if (nodeId !== req.body.nodeId) continue;
+
+            client.send(JSON.stringify({ 
+                type: ENodeMessage.RemovePeer,
+                body: {
+                    userId: fastify.user?.uid
+                }
+            } as INodeMessage<INodeRemovePeer>));
+            res.send({ message: "Peer Removal Requested." });
             return; 
         }
 

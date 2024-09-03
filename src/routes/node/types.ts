@@ -11,6 +11,10 @@ export type INodeCreatePeer = {
     userId: string;
 }
 
+export type INodeRemovePeer = {
+    userId: string;
+}
+
 export type INodeCreatePeerResponse = {
     userId: string;
     ipv4: string; 

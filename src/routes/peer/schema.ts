@@ -10,7 +10,7 @@ export const Tunnel = Type.Object({
   
 export type TunnelType = Static<typeof Tunnel>
 
-const tunnelsSchema: FastifySchema = {
+export const tunnelsSchema: FastifySchema = {
     response: {
         200: Type.Array(Tunnel)
     }
@@ -20,10 +20,18 @@ export const AddBody = Type.Object({
     nodeId: Type.String()
 })
 
-const addSchema: FastifySchema = {
+export const addSchema: FastifySchema = {
     body: AddBody
 }
 
 export type AddBodyType = Static<typeof AddBody>;
 
-export { tunnelsSchema, addSchema };
+export const RemoveBody = Type.Object({
+    nodeId: Type.String()
+})
+
+export const removeSchema: FastifySchema = {
+    body: RemoveBody
+}
+
+export type RemoveBodyType = Static<typeof RemoveBody>;

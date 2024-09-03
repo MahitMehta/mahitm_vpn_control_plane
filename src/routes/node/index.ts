@@ -22,11 +22,11 @@ async function handleNodeMessage(
         switch (msg.type) {
             case ENodeMessage.RequestTunnel: {
                 console.log(`Tunnel state requested by ${nodeId}`);
-                const { ipv4, srcPort, dstPort, privateKey, publicKey } = msg.body as INodeTunnelRequest;
+                const { ipv4, srcPort, dstPort, publicKey } = msg.body as INodeTunnelRequest;
                 const tunnel = await db.collection("tunnels").doc(nodeId).get();
                 
                 if (tunnel.exists) {
-                    await db.collection("tunnels").doc(nodeId).set({
+                    await db.collection("tunnels").doc(nodeId).update({
                         ipv4, srcPort, dstPort
                     })
                     const peers = await db.collection(`tunnels/${nodeId}/peers`).get();
@@ -43,12 +43,13 @@ async function handleNodeMessage(
                 }
 
                 await db.collection("tunnels").doc(nodeId).create({
-                    ipv4, srcPort, dstPort, privateKey, publicKey
+                    ipv4, srcPort, dstPort, publicKey
                 });
+    
                 const response = JSON.stringify({ 
                     type: ENodeMessage.RequestTunnelResponse,
                     body: { 
-                        ipv4, srcPort, dstPort, publicKey, privateKey,
+                        ipv4, srcPort, dstPort, publicKey,
                         peers: [] 
                     }
                  });
