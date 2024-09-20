@@ -13,12 +13,12 @@ services:
     ports:
       - 3000:3000
     command: npm run start
+    restart: always
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.mahitm_vpn_cp.tls=true"
       - "traefik.http.routers.mahitm_vpn_cp.tls.certresolver=myresolver"
       - "traefik.http.routers.mahitm_vpn_cp.rule=Host(`cp0-vpn.mahitm.com`)"
-
 networks:
   proxy:
     name: proxy
