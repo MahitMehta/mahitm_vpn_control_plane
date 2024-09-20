@@ -26,8 +26,9 @@ async function handleNodeMessage(
                 const tunnel = await db.collection("tunnels").doc(nodeId).get();
                 
                 if (tunnel.exists) {
+                    // TODO: Maybe don't update ipv4 once tunnel is created in db?
                     await db.collection("tunnels").doc(nodeId).update({
-                        ipv4, srcPort, dstPort
+                        ipv4, srcPort, dstPort, publicKey
                     })
                     const peers = await db.collection(`tunnels/${nodeId}/peers`).get();
                     const response = JSON.stringify({ 
@@ -82,6 +83,23 @@ async function handleNodeMessage(
 }
 
 const node: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
+    fastify.addHook("preValidation", async (req, reply) => {
+        const { id:nodeId } = req.query as NodeConnectionQuery; 
+        console.log(`Connection from ${nodeId} @ ${req.socket.localAddress}:${req.socket.remotePort}`);
+
+        // Make sure the node is not already connected
+        for (const client of fastify.websocketServer.clients) {
+            // @ts-ignore
+           if (client.nodeId === nodeId) {
+               console.log("Connection Refused: Node already connected.");
+               reply.code(403).send({ message: "Connection Refused." });
+               return; 
+           }
+       }
+
+       // TODO: Check if node exits, if so, make sure IPs match
+    });
+
     fastify.get('/', { websocket: true, schema: { 
         querystring: {
             type: 'object',
@@ -92,7 +110,6 @@ const node: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
         } 
     }},  async (conn, req) => {
         const { id:nodeId } = req.query as NodeConnectionQuery; 
-        console.log(`Connection from ${nodeId}`);
         conn.nodeId = nodeId;
 
         const { firestore:db } = fastify;

@@ -9,14 +9,6 @@ const app: FastifyPluginAsync = async (
     opts
 ): Promise<void> => {
   fastify.register(FastifyFirebase)
-    // .addHook("onRegister", async () => {
-    //   const { firestore:db } = fastify;
-    //   const tunnels = db.collection("tunnels");
-    //   tunnels.onSnapshot(snapshot => {
-    //     console.log(`Received snapshot ${snapshot.docChanges().length}`);
-    //   });
-    // });
-
   fastify.register(FastifyWebSocket, {
     options: { 
       maxPayload: 1048576, 
