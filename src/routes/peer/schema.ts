@@ -5,7 +5,8 @@ export const Tunnel = Type.Object({
     id: Type.String(),
     ipv4: Type.String(),
     dstPort: Type.Number(),
-    publicKey: Type.String()
+    publicKey: Type.String(),
+    connected: Type.Boolean()
 })
 
 export const Peer = Type.Object({

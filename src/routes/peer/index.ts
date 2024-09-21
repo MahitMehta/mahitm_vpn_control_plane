@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync } from "fastify";
 import { getAuth } from "firebase-admin/auth";
-import { ENodeMessage, INodeRemovePeer, type INodeCreatePeer, type INodeMessage } from "../node/types";
+import { ENodeMessage, type INodeCreatePeer, type INodeMessage, type INodeRemovePeer } from "../node/types";
 import { type AddBodyType, type RemoveBodyType, addSchema, removeSchema, tunnelsSchema } from "./schema";
 
 const peer: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
@@ -116,9 +116,21 @@ const peer: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
             return; 
         }
         
+        const nodeIds:Set<string> = new Set();
+        for (const client of fastify.websocketServer.clients) {
+            // @ts-ignore
+            nodeIds.add(client.nodeId);
+        }
+        
         const result = data.docs
-            .filter(doc => !!doc.data().dstPort) // TODO: Remove this filter
-            .map(doc => ({ id: doc.id, ...doc.data() }));
+            .filter(doc => {
+                // TODO: remove check for dstProt
+                return !!doc.data().dstPort; 
+            }) 
+            .map(doc => ({ 
+                id: doc.id, ...doc.data(),
+                connected: nodeIds.has(doc.id) 
+            }));
         res.send(result);
     });
 }
