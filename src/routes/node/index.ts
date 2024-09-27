@@ -4,6 +4,7 @@ import {
 	ENodeMessage,
 	type INodeCreatePeerResponse,
 	type INodeRemovePeerResponse,
+	type INodeTunnel,
 	type INodeTunnelRequest,
 } from "./types";
 
@@ -28,19 +29,24 @@ async function handleNodeMessage(
 					dstPort,
 					publicKey,
 					userRules = [],
+					mesh
 				} = msg.body as INodeTunnelRequest;
+				
 				const tunnel = await db.collection("tunnels").doc(nodeId).get();
 				conn.userRules = userRules;
 
+				let doc = {
+					ipv4,
+					srcPort,
+					dstPort,
+					publicKey,
+					userRules,
+				} as INodeTunnel;
+				if (mesh) doc = { ...doc, meshId: mesh.id, meshIpv4: mesh.ipv4 };
+
 				if (tunnel.exists) {
 					// TODO: Maybe don't update ipv4 once tunnel is created in db?
-					await db.collection("tunnels").doc(nodeId).update({
-						ipv4,
-						srcPort,
-						dstPort,
-						publicKey,
-						userRules,
-					});
+					await db.collection("tunnels").doc(nodeId).update(doc);
 					const peers = await db.collection(`tunnels/${nodeId}/peers`).get();
 					const response = JSON.stringify({
 						type: ENodeMessage.RequestTunnelResponse,
@@ -57,13 +63,7 @@ async function handleNodeMessage(
 					break;
 				}
 
-				await db.collection("tunnels").doc(nodeId).create({
-					ipv4,
-					srcPort,
-					dstPort,
-					publicKey,
-					userRules,
-				});
+				await db.collection("tunnels").doc(nodeId).create(doc);
 
 				const response = JSON.stringify({
 					type: ENodeMessage.RequestTunnelResponse,
@@ -100,8 +100,9 @@ async function handleNodeMessage(
 				console.log(`Unknown message from ${nodeId}, type: ${msg.type}`);
 				break;
 		}
-	} catch {
-		console.log(`Invalid message from ${nodeId}: ${serializedMSG}`);
+	} catch (e) {
+		console.log(`Invalid message from ${nodeId}:${serializedMSG}`);
+		console.error(e);
 	}
 }
 

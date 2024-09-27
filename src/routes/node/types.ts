@@ -30,6 +30,22 @@ export type IUserRule = {
 	pattern: string;
 };
 
+export type IMesh = {
+	id: string;
+	ipv4: string;	
+}
+
+export type INodeTunnel = {
+	ipv4: string;
+	srcPort: number;
+	dstPort: number;
+	publicKey: string;
+	privateKey: string;
+	userRules: IUserRule[];
+	meshId?: string;
+	meshIpv4?: string;
+}
+
 export type INodeTunnelRequest = {
 	ipv4: string;
 	srcPort: number;
@@ -37,6 +53,7 @@ export type INodeTunnelRequest = {
 	publicKey: string;
 	privateKey: string;
 	userRules: IUserRule[];
+	mesh?: IMesh;
 };
 
 export type INodeTunnelRequestResponse = {
