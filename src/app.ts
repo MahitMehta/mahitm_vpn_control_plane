@@ -2,13 +2,13 @@ import { join } from "node:path";
 import AutoLoad from "@fastify/autoload";
 import FastifyWebSocket from "@fastify/websocket";
 import type { FastifyPluginAsync } from "fastify";
-import FastifyFirebase from "./plugins/firestore";
+import FastifyFirebase from "./plugins/firebase";
 
 const app: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
 	fastify.register(FastifyFirebase);
 	fastify.register(FastifyWebSocket, {
 		options: {
-			maxPayload: 1048576,
+			maxPayload: 1048576, // 1MB
 		},
 	});
 

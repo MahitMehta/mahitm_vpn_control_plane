@@ -6,22 +6,30 @@ import type { DecodedIdToken } from "firebase-admin/auth";
 declare module "fastify" {
 	interface FastifyInstance {
 		firestore: admin.firestore.Firestore;
+		auth: admin.auth.Auth;	
 		user: DecodedIdToken | null;
 	}
 }
+
+const clientEmail = process.env.FB_ADMIN_CLIENT_EMAIL || "mahitm-vpn-control-plane@mahitmvpn.iam.gserviceaccount.com"
+const projectId = process.env.FB_ADMIN_PROJECT_ID || "mahitmvpn"
 
 export default fp(
 	(fastify, _options, done) => {
 		admin.initializeApp({
 			credential: cert({
-				clientEmail:
-					"mahitm-vpn-control-plane@mahitmvpn.iam.gserviceaccount.com",
+				clientEmail,
+				projectId,
 				privateKey: process.env.FB_ADMIN_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-				projectId: "mahitmvpn",
 			}),
 		});
 
 		const db = admin.firestore();
+		const auth = admin.auth();
+
+		if (!fastify.auth) {
+			fastify.decorate("auth", auth);
+		}
 
 		if (!fastify.firestore) {
 			fastify.decorate("firestore", db);
@@ -35,5 +43,5 @@ export default fp(
 
 		done();
 	},
-	{ name: "fastify-firestore" },
+	{ name: "fastify-firebase" },
 );

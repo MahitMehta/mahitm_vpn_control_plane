@@ -166,6 +166,7 @@ const peer: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
 		const result = data.docs
 			.filter(
 				(doc) =>
+					doc.data().dstPort &&
 					fastify?.user?.email &&
 					hasNodeAccess(fastify.user.email, doc.data().userRules || []),
 			)

@@ -5,6 +5,7 @@ export enum ENodeMessage {
 	RemovePeerResponse = 3,
 	RequestTunnel = 4,
 	RequestTunnelResponse = 5,
+	MeshRequest = 6,
 }
 
 export type INodeCreatePeer = {
